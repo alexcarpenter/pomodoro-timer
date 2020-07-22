@@ -24,7 +24,8 @@ body {
   transition: all ease-in-out 0.2s;
 }
 
-body[data-state="idle"] {
+body[data-state="idle"],
+body[data-state="completed"] {
   background-color: var(--gray-700);
 }
 

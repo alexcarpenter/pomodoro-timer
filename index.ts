@@ -1,42 +1,96 @@
-import { Machine, createMachine, interpret } from 'xstate';
+import { createMachine, interpret, assign } from 'xstate';
 import { formatTime } from './utils';
 
-const timerMachine = createMachine(
+interface PomodoroContext {
+  duration: number;
+  elapsed: number;
+  interval: number;
+}
+
+type PomodoroEvent =
+  | {
+    type: 'TICK';
+  }
+  | {
+    type: 'DURATION.UPDATE';
+    value: number;
+  }
+  | {
+    type: 'TOGGLE';
+  }
+  | {
+    type: 'RESET';
+  };
+
+
+const pomodoroMachine = createMachine<PomodoroContext, PomodoroEvent>(
   {
-    id: 'timer',
+    id: 'pomodoro',
     initial: 'idle',
     context: {
       duration: 1440,
-      interval: 1000
+      elapsed: 0,
+      interval: 1
     },
     states: {
       idle: {
-        entry: ['resetTimer'],
         on: {
           TOGGLE: 'running'
         }
       },
       running: {
-        activities: ['startTimer'],
-        on: { TOGGLE: 'paused', RESET: 'idle' }
+        invoke: {
+          src: context => cb => {
+            cb('TICK');
+            const interval = setInterval(() => {
+              cb('TICK');
+            }, 1000 * context.interval);
+
+            return () => {
+              clearInterval(interval);
+            }
+          }
+        },
+        on: {
+          '': {
+            target: 'idle',
+            cond: context => {
+              return context.elapsed >= context.duration
+            },
+            actions: assign({
+              elapsed: 0
+            })
+          },
+          TOGGLE: 'paused',
+          TICK: {
+            actions: assign({
+              elapsed: context => +(context.elapsed + context.interval).toFixed(2)
+            })
+          }
+        }
       },
       paused: {
-        on: { TOGGLE: 'running', RESET: 'idle' }
+        on: {
+          TOGGLE: 'running'
+        }
+      },
+      completed: {
+        type: 'final'
       }
-    }
-  },
-  {
-    actions: {
-      resetTimer: (context) => context.duration = 1440
     },
-    activities: {
-      startTimer: (context) => {
-        context.duration = context.duration - 1
-        const interval = setInterval(() => {
-          context.duration = context.duration - 1
-          document.getElementById('time').innerHTML = formatTime(context.duration);
-        }, context.interval);
-        return () => clearInterval(interval);
+    on: {
+      'DURATION.UPDATE': {
+        target: 'idle',
+        actions: assign({
+          duration: (_, event) => event.value,
+          elapsed: 0
+        })
+      },
+      RESET: {
+        target: 'idle',
+        actions: assign<PomodoroContext>({
+          elapsed: 0
+        })
       }
     }
   }
@@ -45,27 +99,36 @@ const timerMachine = createMachine(
 const timeEl = document.getElementById('time');
 const toggleEl = document.getElementById('toggle');
 
-const timerService = interpret(timerMachine)
+const pomodoroService = interpret(pomodoroMachine)
   .onTransition((state) => {
-    timeEl.innerHTML = formatTime(state.context.duration);
     document.body.dataset.state = state.value.toString();
+    timeEl.innerHTML = formatTime(state.context.duration - state.context.elapsed)
     if (state.changed) {
       document.body.dataset.state = state.value.toString();
       if (state.value === 'running') {
+        document.title = `Running: ${formatTime(state.context.duration - state.context.elapsed)}`;
         toggleEl.innerHTML = 'Pause'
       } else if (state.value === 'paused') {
+        document.title = `Paused: ${formatTime(state.context.duration - state.context.elapsed)}`;
         toggleEl.innerHTML = 'Resume'
-      } else if (state.value === 'idle') {
+      } else if (state.value === 'idle' || state.value === 'completed') {
+        document.title = 'Start a timer';
         toggleEl.innerHTML = 'Start'
       }
     }
   })
   .start();
 
-document.addEventListener('click', (event: MouseEvent) => {
+document.querySelectorAll("input[name='duration']").forEach((input) => {
+  input.addEventListener('change', event => {
+    pomodoroService.send("DURATION.UPDATE", { value: +event.target.value });
+  });
+});
+
+document.addEventListener('click', event => {
   if (event.target.matches('#toggle')) {
-    timerService.send('TOGGLE');
+    pomodoroService.send('TOGGLE');
   } else if (event.target.matches('#reset')) {
-    timerService.send('RESET');
+    pomodoroService.send('RESET');
   }
 });
