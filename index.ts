@@ -1,66 +1,66 @@
-import { createMachine, interpret, assign } from '@xstate/fsm';
+import { Machine, createMachine, interpret } from 'xstate';
 import { formatTime } from './utils';
 
-interface TimerContext {
-  time: number;
-}
-
-const timerMachine = createMachine<TimerContext>({
-  id: 'timer',
-  initial: 'idle',
-  context: {
-    time: 1440
+const timerMachine = createMachine(
+  {
+    id: 'timer',
+    initial: 'idle',
+    context: {
+      duration: 1440,
+      interval: 1000
+    },
+    states: {
+      idle: {
+        entry: ['resetTimer'],
+        on: {
+          TOGGLE: 'running'
+        }
+      },
+      running: {
+        activities: ['startTimer'],
+        on: { TOGGLE: 'paused', RESET: 'idle' }
+      },
+      paused: {
+        on: { TOGGLE: 'running', RESET: 'idle' }
+      }
+    }
   },
-  states: {
-    idle: {
-      on: {
-        TOGGLE: {
-          target: 'running',
-        }
-      }
+  {
+    actions: {
+      resetTimer: (context) => context.duration = 1440
     },
-    running: {
-      on: {
-        TOGGLE: {
-          target: 'paused'
-        },
-        RESET: {
-          target: 'idle'
-        }
-      }
-    },
-    paused: {
-      on: {
-        TOGGLE: {
-          target: 'running'
-        },
-        RESET: {
-          target: 'idle'
-        }
+    activities: {
+      startTimer: (context) => {
+        context.duration = context.duration - 1
+        const interval = setInterval(() => {
+          context.duration = context.duration - 1
+          document.getElementById('time').innerHTML = formatTime(context.duration);
+        }, context.interval);
+        return () => clearInterval(interval);
       }
     }
   }
-});
-
-
-const timerService = interpret(timerMachine).start();
+);
 
 const timeEl = document.getElementById('time');
 const toggleEl = document.getElementById('toggle');
 
-timerService.subscribe(state => {
-  timeEl.innerHTML = formatTime(state.context.time);
-  document.body.dataset.state = state.value;
-  if (state.changed) {
-    document.body.dataset.state = state.value;
-    if (state.value === 'running') {
-      toggleEl.innerHTML = 'Pause'
+const timerService = interpret(timerMachine)
+  .onTransition((state) => {
+    timeEl.innerHTML = formatTime(state.context.duration);
+    document.body.dataset.state = state.value.toString();
+    if (state.changed) {
+      document.body.dataset.state = state.value.toString();
+      if (state.value === 'running') {
+        toggleEl.innerHTML = 'Pause'
+      } else if (state.value === 'paused') {
+        toggleEl.innerHTML = 'Resume'
+      } else if (state.value === 'idle') {
+        toggleEl.innerHTML = 'Start'
+      }
     }
-    if (state.value === 'paused') {
-      toggleEl.innerHTML = 'Start'
-    }
-  }
-});
+  })
+  .start();
 
 document.addEventListener('click', (event: MouseEvent) => {
   if (event.target.matches('#toggle')) {

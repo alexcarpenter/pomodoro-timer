@@ -1,18 +1,18 @@
 {
-  "name": "pomodoro",
+  "name": "pomodoro-timer",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Pomodoro timer built using TypeScript and XState",
+  "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "parcel index.html"
   },
-  "keywords": [],
   "author": "Alex Carpenter",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "typescript": "^3.9.7"
   },
   "dependencies": {
-    "@xstate/fsm": "^1.4.0"
+    "@xstate/fsm": "^1.4.0",
+    "xstate": "^4.11.0"
   }
 }

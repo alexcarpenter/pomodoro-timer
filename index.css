@@ -1,3 +1,14 @@
+:root {
+  --gray-400: #CBD5E0;
+  --gray-700: #4A5568;
+  --green-400: #68D391;
+  --green-700: #2F855A;
+  --red-400: #FC8181;
+  --red-700: #C53030;
+  --orange-400: #F6AD55;
+  --orange-700: #C05621;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -14,15 +25,31 @@ body {
 }
 
 body[data-state="idle"] {
-  background-color: black;
+  background-color: var(--gray-700);
 }
 
 body[data-state="running"] {
-  background-color: green;
+  background-color: var(--green-400);
 }
 
 body[data-state="paused"] {
-  background-color: orange;
+  background-color: var(--orange-400);
+}
+
+fieldset {
+  border: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 #app {
@@ -33,9 +60,12 @@ body[data-state="paused"] {
 }
 
 .time {
+  margin-top: 2rem;
   margin-bottom: 2rem;
   color: white;
   font-size: 10rem;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
 }
 
 .button-group {
@@ -44,13 +74,45 @@ body[data-state="paused"] {
 
 .button {
   appearance: none;
-  min-width: 100px;
+  min-width: 150px;
   padding: 1rem 1.5rem;
   background-color: white;
   border: transparent;
-  color: black;
+  color: var(--gray-700);
   font: inherit;
   transition: all ease-in-out 0.2s;
+  cursor: pointer;
+}
+
+.button:hover,
+.button:focus {
+  background-color: #1A202C;
+  color: #fff;
+}
+
+.button:focus {
+  outline: none;
+  box-shadow: 0 0 0 .2rem rgba(0, 0, 0, 0.25);
+}
+
+body[data-state="running"] .button {
+  color: var(--green-400);
+}
+
+body[data-state="running"] .button:hover,
+body[data-state="running"] .button:focus {
+  background-color: var(--green-700);
+  color: #fff;
+}
+
+body[data-state="paused"] .button {
+  color: var(--orange-400);
+}
+
+body[data-state="paused"] .button:hover,
+body[data-state="paused"] .button:focus {
+  background-color: var(--orange-700);
+  color: #fff;
 }
 
 .button:first-of-type {
@@ -64,10 +126,31 @@ body[data-state="paused"] {
 }
 
 .button + .button {
-  margin-left: 2px;
+  margin-left: 4px;
 }
 
-.button:hover,
-.button:focus {
-  background-color: lightgray;
+.control {
+  position: relative;
+  cursor: pointer;
+}
+
+.control + .control {
+  margin-left: 4px;
+}
+
+.control-indicator {
+  padding: .5rem .75rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  border-radius: 4px;
+}
+
+.control input:checked ~ .control-indicator,
+.control:hover > .control-indicator,
+.control input:focus ~ .control-indicator {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.control input:focus ~ .control-indicator {
+  box-shadow: 0 0 0 .2rem rgba(0, 0, 0, 0.25);
 }

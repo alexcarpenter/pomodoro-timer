@@ -5,8 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="index.css">
 </head>
-<body>
+<body data-state="idle">
   <div id="app">
+    <fieldset>
+      <legend class="sr-only">Durations</legend>
+      <label class="control" for="pomodoro">
+        <input class="sr-only" type="radio" name="duration" id="pomodoro" value="1440" checked />
+        <span class="control-indicator">Pomodoro</span>
+      </label>
+      <label class="control" for="long">
+        <input class="sr-only" type="radio" name="duration" id="long" value="300" />
+        <span class="control-indicator">Long break</span>
+      </label>
+      <label class="control" for="short">
+        <input class="sr-only" type="radio" name="duration" id="short" value="120" />
+        <span class="control-indicator">Short break</span>
+      </label>
+    </fieldset>
     <p class="time" id="time">00:00</p>
     <div class="button-group">
       <button class="button" id="toggle">Start</button>
